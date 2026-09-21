@@ -49,6 +49,17 @@ use Twig\TokenParser\TokenParserInterface;
 final class TwigBundle extends Bundle {
 
 	/**
+	 * The configuration key everything of this bundle lives under.
+	 *
+	 * The framework derives it from the bundle's short class name, so this constant is
+	 * a copy of a derivation rather than its source — and a test asserts the two still
+	 * agree, because a configuration written under a key nobody reads is silent.
+	 *
+	 * @var string
+	 */
+	public const ALIAS = 'twig';
+
+	/**
 	 * The directory searched when the host configures no template path.
 	 *
 	 * Written as a container parameter expression rather than as a resolved path,
