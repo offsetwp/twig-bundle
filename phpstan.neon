@@ -1,0 +1,13 @@
+# The highest level, with no baseline and no ignores.
+#
+# It is also what guards one hazard this package makes for itself: the facade is called
+# Twig and lives in the bundle namespace, so a partially qualified Twig\Environment
+# written anywhere inside that namespace resolves to a class under the facade, which
+# does not exist. At this level an unknown class is an error, so the mistake cannot
+# reach a commit. Every Twig class is imported with a use statement, always.
+parameters:
+	level: max
+	paths:
+		- src
+		- tests
+	tmpDir: .phpstan.cache

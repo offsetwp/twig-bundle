@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<ruleset name="OffsetWP Coding Standards">
+	<description>PHPCS</description>
+
+	<arg value="ps"/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+
+	<rule ref="WordPress">
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound" />
+		<exclude name="Universal.Operators.DisallowShortTernary.Found" />
+		<exclude name="WordPress.Files.FileName" />
+		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid" />
+		<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped" />
+		<exclude name="WordPress.Security.ValidatedSanitizedInput.InputNotSanitized" />
+		<exclude name="WordPress.Security.ValidatedSanitizedInput.InputNotValidated" />
+	</rule>
+
+	<rule ref="Generic.NamingConventions.CamelCapsFunctionName">
+		<properties>
+			<property name="strict" value="true"/>
+		</properties>
+	</rule>
+
+	<!--
+		Added beyond the framework's list, and only for tests. A test is named after the
+		behaviour it protects, and several of those names read "testATemplateRenders…"
+		or "testANamespacedTemplateResolves", where the leading article puts two
+		capitals side by side and the strict camel-caps rule refuses them. Renaming
+		them would cost more than it buys. The rule stays on for src/.
+	-->
+	<rule ref="Generic.NamingConventions.CamelCapsFunctionName.ScopeNotCamelCaps">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+
+	<file>src</file>
+	<file>tests</file>
+
+	<exclude-pattern>vendor</exclude-pattern>
+</ruleset>

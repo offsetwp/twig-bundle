@@ -1,0 +1,28 @@
+# OS and IDE files
+.DS_Store
+.idea/
+*.log
+
+# Dependencies
+/vendor/
+composer.lock
+
+# PHP CodeSniffer
+.phpcs.cache
+
+# PHPStan
+.phpstan.cache
+
+# PHPUnit
+.phpunit.cache/
+.phpunit.result.cache
+phpunit.xml
+coverage/
+coverage.xml
+
+# Build artefacts
+build/
+
+# Written by the host cache pool of the twig/*-extra fixture project, and removed
+# again by the test that needed it.
+tests/Fixtures/*/var/

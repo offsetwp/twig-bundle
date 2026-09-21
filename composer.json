@@ -1,0 +1,97 @@
+{
+	"name": "offsetwp/twig-bundle",
+	"type": "library",
+	"description": "Twig integration for the OffsetWP Framework: zero configuration to start, every option when you need it",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Jérôme Wohlschlegel",
+			"email": "jerome.wohlschlegel@gmail.com"
+		}
+	],
+	"homepage": "https://offsetwp.github.io",
+	"support": {
+		"issues": "https://github.com/offsetwp/twig-bundle/issues",
+		"source": "https://github.com/offsetwp/twig-bundle"
+	},
+	"keywords": [
+		"offsetwp",
+		"wordpress",
+		"twig",
+		"bundle",
+		"template",
+		"templating",
+		"view"
+	],
+	"autoload": {
+		"psr-4": {
+			"OffsetWP\\Bundle\\TwigBundle\\": "src/"
+		},
+		"files": [
+			"src/helpers.php"
+		]
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"App\\": "tests/Fixtures/Usage/App/",
+			"OffsetWP\\Bundle\\TwigBundle\\Tests\\": "tests/"
+		}
+	},
+	"require": {
+		"php": ">=8.5",
+		"offsetwp/framework": "^1.1",
+		"psr/container": "^1.1 || ^2.0",
+		"symfony/config": "^8.1",
+		"symfony/dependency-injection": "^8.1",
+		"twig/twig": "^3.27"
+	},
+	"require-dev": {
+		"league/commonmark": "^2.10",
+		"lorenzo/pinky": "^1.1",
+		"phpstan/phpstan": "^2.2",
+		"phpunit/phpunit": "^13.3",
+		"symfony/cache": "^8.1",
+		"symfony/css-selector": "^8.1",
+		"symfony/filesystem": "^8.1",
+		"symfony/intl": "^8.1",
+		"symfony/mime": "^8.1",
+		"symfony/string": "^8.1",
+		"symfony/translation-contracts": "^3.7",
+		"symfony/yaml": "^8.1",
+		"tijsverkoyen/css-to-inline-styles": "^2.4",
+		"twig/cache-extra": "^3.24",
+		"twig/cssinliner-extra": "^3.26",
+		"twig/html-extra": "^3.24",
+		"twig/inky-extra": "^3.24",
+		"twig/intl-extra": "^3.26",
+		"twig/markdown-extra": "^3.26",
+		"twig/string-extra": "^3.24",
+		"wp-coding-standards/wpcs": "^3.4.1"
+	},
+	"minimum-stability": "stable",
+	"prefer-stable": true,
+	"scripts": {
+		"lint": "@php vendor/bin/phpcs",
+		"lint:fix": "@php vendor/bin/phpcbf",
+		"stan": "@php vendor/bin/phpstan analyse",
+		"test": "@php vendor/bin/phpunit",
+		"ci": [
+			"@lint",
+			"@stan",
+			"@test"
+		]
+	},
+	"scripts-descriptions": {
+		"lint": "Check the coding standard over src and tests.",
+		"lint:fix": "Fix every coding-standard violation that can be fixed automatically.",
+		"stan": "Run the static analyser over src and tests.",
+		"test": "Run the unit and integration suites.",
+		"ci": "Run the coding standard, the static analyser and the test suites, in that order."
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"sort-packages": true
+	}
+}

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+	bootstrap="tests/bootstrap.php"
+	cacheDirectory=".phpunit.cache"
+	executionOrder="random"
+	resolveDependencies="true"
+	beStrictAboutOutputDuringTests="true"
+	failOnWarning="true"
+	failOnRisky="true"
+	failOnNotice="true"
+	failOnDeprecation="true"
+	colors="true">
+
+	<testsuites>
+		<testsuite name="Unit">
+			<directory>tests/Unit</directory>
+		</testsuite>
+		<testsuite name="Integration">
+			<directory>tests/Integration</directory>
+		</testsuite>
+
+		<!--
+			Whole projects, configured by the files a host writes, booted the way a host
+			boots. Nothing here reaches into the container or loads an extension by hand.
+		-->
+		<testsuite name="Usage">
+			<directory>tests/Usage</directory>
+		</testsuite>
+	</testsuites>
+
+	<source>
+		<include>
+			<directory>src</directory>
+		</include>
+	</source>
+</phpunit>

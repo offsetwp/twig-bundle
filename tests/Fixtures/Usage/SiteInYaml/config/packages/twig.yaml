@@ -1,0 +1,21 @@
+# A fixture project of the OffsetWP Twig Bundle test suite.
+#
+# The same bundle configured in YAML, which is the other file the kernel globs for.
+# A YAML file has no __DIR__, so a directory is named through the kernel parameter —
+# which is the idiom a host writing YAML has to use and the one the README prints.
+twig:
+    paths:
+        '%kernel.root_path%/mail': mail
+    globals:
+        association: 'Étoile Malraux'
+    date:
+        format: 'd/m/Y'
+        timezone: 'Europe/Paris'
+    number_format:
+        decimals: 2
+        decimal_point: ','
+        thousands_separator: ' '
+    strict_variables: true
+    optimizations: 0
+    extensions:
+        - 'App\Twig\SiteExtension'

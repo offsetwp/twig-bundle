@@ -1,0 +1,117 @@
+name: CI
+
+# A push to a branch that has a pull request open used to start both triggers, so one
+# commit ran four jobs. Pushes are watched on main only; every other branch is covered
+# by its pull request.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+# A second push supersedes the first: the run for the earlier commit is cancelled
+# rather than left to finish and report on code nobody has any more.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: PHP 8.5
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          # What the twig/*-extra recipes need. intl and mbstring have to be asked
+          # for; dom, libxml and xsl are on the runner already and are named so that
+          # this list is the whole answer rather than the part that needed asking.
+          extensions: intl, mbstring, dom, libxml, xsl
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolve the Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the Composer downloads
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php8.5-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ runner.os }}-php8.5-
+
+      - name: Validate the manifest
+        run: composer validate --strict
+
+      - name: Install the dependencies
+        run: composer update --no-interaction --no-progress
+
+      # The Twig floor is set by security advisories, not by features. A new
+      # advisory has to surface as a red build rather than as a resolution that
+      # silently refuses to install.
+      - name: Audit the dependencies
+        run: composer audit
+
+      # No baseline, ever. A baseline turns "this is clean" into "this was clean
+      # once", and the only way to keep the first meaning is to refuse the file.
+      - name: Refuse a static-analysis baseline
+        run: test ! -e phpstan-baseline.neon
+
+      - name: Lint, analyse and test
+        run: composer ci
+
+  # A dependency floor that is not proven is a guess. This job resolves every
+  # requirement at its lowest allowed version and runs the same checks. It is
+  # required, not informational: no continue-on-error here, ever.
+  lowest:
+    name: PHP 8.5, lowest dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, mbstring, dom, libxml, xsl
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolve the Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the Composer downloads
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-lowest-${{ runner.os }}-php8.5-${{ hashFiles('composer.json') }}
+          restore-keys: composer-lowest-${{ runner.os }}-php8.5-
+
+      - name: Refuse a static-analysis baseline
+        run: test ! -e phpstan-baseline.neon
+
+      - name: Install the lowest allowed dependencies
+        run: composer update --prefer-lowest --prefer-stable --no-interaction --no-progress
+
+      # Printed so that a drift in the resolved floor shows up in a diff of the
+      # build log. Expected: offsetwp/framework 1.1.0, twig/twig v3.27.0, and
+      # 8.1.0 for both container packages.
+      - name: Print the resolved versions
+        run: composer show --direct
+
+      - name: Audit the dependencies
+        run: composer audit
+
+      - name: Lint, analyse and test
+        run: composer ci
