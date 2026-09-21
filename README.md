@@ -144,34 +144,28 @@ echo twig( 'pages/front-page.twig' );   // templates/pages/front-page.twig
 
 ### Adding paths
 
-`paths` maps an **absolute** directory to a namespace, or to `null` for the main one. It is a
-key of the configuration file, so the whole of it looks like this:
+One call per directory, each under a namespace or under the main one:
 
 ```php
 // config/packages/twig.php
+use OffsetWP\Bundle\TwigBundle\Configuration\TwigConfig;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function ( ContainerConfigurator $container ): void {
-	$container->extension(
-		'twig',
-		array(
-			'paths' => array(
-				'%kernel.root_path%/templates/emails' => 'emails',
-				'%kernel.root_path%/vendor-views'     => 'shop',
+	TwigConfig::create()
+		->path( '%kernel.root_path%/templates/emails', 'emails' )
+		->path( '%kernel.root_path%/vendor-views', 'shop' )
 
-				// The main namespace is searched in the order written, and templates/
-				// comes last — so this one answers first for a filename they share.
-				'/abs/legacy-templates'               => null,
-			),
-		)
-	);
+		// The main namespace is searched in the order written, and templates/ comes
+		// last — so this one answers first for a filename they share.
+		->path( '/abs/legacy-templates' )
+		->apply( $container );
 };
 ```
 
 `%kernel.root_path%` is the root of the project, and is resolved before this bundle sees the
-value — in a key as readily as in a value, and in a YAML file as readily as in a PHP one. Any
-other absolute path works too. A relative one is refused when the container builds, and so is
-a directory that does not exist.
+value — in a YAML file as readily as in a PHP one. Any other absolute path works too. A
+relative one is refused when the container builds, and so is a directory that does not exist.
 
 ### Namespaced paths
 
@@ -189,6 +183,27 @@ in place; this is the list of all of them.
 
 ```php
 // config/packages/twig.php
+use OffsetWP\Bundle\TwigBundle\Configuration\Escaping;
+use OffsetWP\Bundle\TwigBundle\Configuration\TwigConfig;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+return static function ( ContainerConfigurator $container ): void {
+	TwigConfig::create()
+		->strictVariables( true )
+		->autoescape( Escaping::ByTemplateName )
+		->apply( $container );
+};
+```
+
+One method per key, so an editor completes the whole surface and a mistyped key is a compile
+error. It invents no default and validates nothing: what it builds goes through the same tree
+as the array below, and raises the same messages.
+
+That array is the native form, and the one every example in the rest of this file could have
+been written in:
+
+```php
+// config/packages/twig.php
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function ( ContainerConfigurator $container ): void {
@@ -202,7 +217,8 @@ return static function ( ContainerConfigurator $container ): void {
 };
 ```
 
-The kernel reads `config/packages/*.yaml` as readily, if you `composer require symfony/yaml`:
+The kernel reads `config/packages/*.yaml` as readily, if you `composer require symfony/yaml`.
+A YAML file has no methods to call, so it writes the keys:
 
 ```yaml
 # config/packages/twig.yaml
@@ -252,8 +268,8 @@ one and yours is used.
 diagnostics of debug mode without Twig stat-ing every template on every request:
 
 ```php
-'debug'       => true,
-'auto_reload' => false,
+->debug( true )
+->autoReload( false )
 ```
 
 ### autoescape
@@ -262,25 +278,28 @@ diagnostics of debug mode without Twig stat-ing every template on every request:
 or a PHP callable:
 
 ```php
-'autoescape' => 'html',   // the default
-'autoescape' => false,    // escape nothing
-'autoescape' => 'js',
-'autoescape' => 'name',   // .txt.twig renders raw, everything else as HTML
-'autoescape' => array( \App\Twig\Escaping::class, 'guess' ),
+->autoescape( Escaping::Html )             // the default
+->autoescape( Escaping::Js )
+->autoescape( Escaping::ByTemplateName )   // .txt.twig renders raw, everything else as HTML
+->autoescape( 'a_strategy_you_registered' )
+->noAutoescape()                           // escape nothing
+->autoescapeWith( EscapingStrategy::class, 'guess' )
 ```
 
+`Escaping` names the six strategies Twig ships — `Html`, `Js`, `Css`, `Url`, `HtmlAttribute`,
+`HtmlAttributeRelaxed` — plus `ByTemplateName`.
+
 ```php
-// app/Twig/Escaping.php
-final class Escaping {
+// app/Twig/EscapingStrategy.php
+final class EscapingStrategy {
 	public static function guess( string $name ): string|false {
 		return str_ends_with( $name, '.txt.twig' ) ? false : 'html';
 	}
 }
 ```
 
-An array callable, not a closure: every extension configuration is serialised while the
-container compiles, and a closure cannot be. Passing one is refused at build time, and so is
-anything that is none of the four forms above.
+Two strings rather than a callable: every extension configuration is serialised while the
+container compiles, and a closure cannot be.
 
 ### cache
 
@@ -289,14 +308,14 @@ This bundle passes the key through and creates no directory, writes no file and 
 cache warmer.
 
 ```php
-'cache' => false,                              // the default
-'cache' => '%kernel.root_path%/var/cache/twig',
-'cache' => '%env(TWIG_CACHE_DIR)%',            // resolved while the container compiles
-'cache' => '@app.twig_cache',                  // a service implementing Twig\Cache\CacheInterface
+->noCache()                                              // the default
+->cacheDirectory( '%kernel.root_path%/var/cache/twig' )
+->cacheDirectory( '%env(TWIG_CACHE_DIR)%' )              // resolved while the container compiles
+->cacheService( 'app.twig_cache' )                       // a service implementing Twig\Cache\CacheInterface
 ```
 
 A directory has to be absolute, and a relative one is refused when the container builds. An
-environment variable works here and in `paths` and `default_path`; its value is substituted
+environment variable works here and in `path()` and `defaultPath()`; its value is substituted
 after this bundle has run, so the directory is Twig's to check at the first render.
 
 ### date and number formats
@@ -305,16 +324,12 @@ Settings of Twig's core extension rather than constructor options, so that a sit
 comma and `Europe/Paris` has them on its first day:
 
 ```php
-'date' => array(
-	'format'          => 'd/m/Y H:i',
-	'interval_format' => '%d jours',   // a literal percent sign is written %%
-	'timezone'        => 'Europe/Paris',
-),
-'number_format' => array(
-	'decimals'            => 2,
-	'decimal_point'       => ',',
-	'thousands_separator' => ' ',
-),
+->dateFormat( 'd/m/Y H:i' )
+->dateIntervalFormat( '%d jours' )   // a literal percent sign is written %%
+->dateTimezone( 'Europe/Paris' )
+->numberDecimals( 2 )
+->numberDecimalPoint( ',' )
+->numberThousandsSeparator( ' ' )
 ```
 
 ```twig
@@ -329,7 +344,7 @@ interval format `%H:%I:%S` is written `%%H:%%I:%%S`.
 ### use_yield
 
 ```php
-'use_yield' => true,
+->useYield( true )
 ```
 
 A compiled template then yields its output instead of building the whole string in memory,
@@ -481,20 +496,20 @@ only a line in the configuration file:
 
 ```php
 // config/packages/twig.php
+use OffsetWP\Bundle\TwigBundle\Configuration\TwigConfig;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Twig\Extension\DebugExtension;
+use Twig\Extra\Intl\IntlExtension;
 
 return static function ( ContainerConfigurator $container ): void {
-	$container->extension(
-		'twig',
-		array(
-			'extensions' => array(
-				\Twig\Extra\Intl\IntlExtension::class,
-				\Twig\Extension\DebugExtension::class,
-			),
-		)
-	);
+	TwigConfig::create()
+		->extension( IntlExtension::class )
+		->extension( DebugExtension::class )
+		->apply( $container );
 };
 ```
+
+`->extensions( IntlExtension::class, DebugExtension::class )` says the same in one call.
 
 A class that does not exist, that is not a Twig extension, or that arrives both here and as a
 tagged service, is refused when the container builds — and that last message names both
@@ -603,20 +618,17 @@ A variable every template can read without being handed it:
 
 ```php
 // config/packages/twig.php
+use App\Service\MenuBuilder;
+use OffsetWP\Bundle\TwigBundle\Configuration\TwigConfig;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function ( ContainerConfigurator $container ): void {
-	$container->extension(
-		'twig',
-		array(
-			'globals' => array(
-				'site_name' => '%app.name%',                  // a container parameter
-				'year'      => 2026,                          // a scalar
-				'menu'      => '@App\\Service\\MenuBuilder',   // a service
-				'literal'   => '@@handle',                    // the string "@handle"
-			),
-		)
-	);
+	TwigConfig::create()
+		->global( 'year', 2026 )                      // a scalar
+		->global( 'site_name', '%app.name%' )         // a container parameter
+		->globalService( 'menu', MenuBuilder::class ) // a service
+		->globalLiteral( 'handle', '@offsetwp' )      // the string, "@" and all
+		->apply( $container );
 };
 ```
 
@@ -624,8 +636,8 @@ return static function ( ContainerConfigurator $container ): void {
 {{ site_name }} — {{ year }}
 ```
 
-A global pointing at a service that does not exist is refused when the container builds,
-naming the global and the service id.
+A global naming a service that does not exist is refused when the container builds, naming
+the global and the service id.
 
 **A global that is a service is built eagerly**, on every request that renders anything at
 all — Twig wants the value before its extensions initialise. When that matters, expose a
@@ -684,8 +696,8 @@ The filesystem loader exists only when it has somewhere to look. Configure no `p
 keep no `templates/` directory, and yours is the only loader there is:
 
 ```php
-// config/packages/twig.php
-$container->extension( 'twig', array( 'paths' => array() ) );
+// config/packages/twig.php — no path, so no filesystem loader
+TwigConfig::create()->apply( $container );
 ```
 
 ```php
@@ -726,9 +738,7 @@ composer require twig/intl-extra
 
 ```php
 // config/packages/twig.php
-'extensions' => array(
-	\Twig\Extra\Intl\IntlExtension::class,
-),
+->extension( \Twig\Extra\Intl\IntlExtension::class )
 ```
 
 ```twig
@@ -849,7 +859,7 @@ not add. Both are one line.
 ### The dump extension
 
 ```php
-'extensions' => array( \Twig\Extension\DebugExtension::class ),
+->extension( \Twig\Extension\DebugExtension::class )
 ```
 
 ```twig
@@ -861,7 +871,7 @@ Not enabled by `debug`, tempting as that is.
 ### The string loader extension
 
 ```php
-'extensions' => array( \Twig\Extension\StringLoaderExtension::class ),
+->extension( \Twig\Extension\StringLoaderExtension::class )
 ```
 
 ```twig
@@ -880,18 +890,16 @@ merges with whatever the host configured; it does not replace it.
 // src/ShopBundle.php
 namespace App\Bundle;
 
+use OffsetWP\Bundle\TwigBundle\Configuration\TwigConfig;
 use OffsetWP\Framework\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 final class ShopBundle extends Bundle {
 	public function prependExtension( ContainerConfigurator $container, ContainerBuilder $builder ): void {
-		$container->extension(
-			'twig',
-			array(
-				'paths' => array( __DIR__ . DIRECTORY_SEPARATOR . 'templates' => 'shop' ),
-			)
-		);
+		TwigConfig::create()
+			->path( __DIR__ . DIRECTORY_SEPARATOR . 'templates', 'shop' )
+			->apply( $container, prepend: true );
 	}
 }
 ```
@@ -971,7 +979,7 @@ well, a page render recompiles both — so setting `cache` is the single highest
 a production site can make here:
 
 ```php
-'cache' => '%kernel.root_path%/var/cache/twig',
+->cacheDirectory( '%kernel.root_path%/var/cache/twig' )
 ```
 
 Nothing else in this package is eager: booting constructs nothing, building the environment
