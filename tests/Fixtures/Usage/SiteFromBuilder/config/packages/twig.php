@@ -20,7 +20,7 @@ return static function ( ContainerConfigurator $container ): void {
 	TwigConfig::create()
 		->path( '%kernel.root_path%/mail', 'mail' )
 		->autoescape( Escaping::Html )
-		->global( 'association', 'Étoile Malraux' )
+		->global( 'owner', 'Éditions Exemple' )
 		->globalService( 'rates', Rates::class )
 		->globalLiteral( 'handle', '@offsetwp' )
 		->dateFormat( 'd/m/Y' )

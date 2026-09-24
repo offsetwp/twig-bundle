@@ -66,6 +66,6 @@ final class BuilderConfigurationTest extends UsageTestCase {
 			array( 'opened' => new \DateTimeImmutable( '2026-01-01 12:00:00', new \DateTimeZone( 'UTC' ) ) )
 		);
 
-		$this->assertSame( "Étoile Malraux|@offsetwp|0.2|01/01/2026|1 234,50\n", $rendered );
+		$this->assertSame( "Éditions Exemple|@offsetwp|0.2|01/01/2026|1 234,50\n", $rendered );
 	}
 }

@@ -715,12 +715,12 @@ final class ConfigurationOptionsTest extends KernelTestCase {
 			$this->boot(
 				array(
 					'date'    => array( 'format' => 'Y-m-d' ),
-					'globals' => array( 'site' => 'Étoile Malraux' ),
+					'globals' => array( 'site' => 'Éditions Exemple' ),
 				)
 			)
 		);
 
-		$this->assertSame( "Étoile Malraux — 2026-01-01\n", $twig->render( 'date/format-and-global.twig', $this->moment() ) );
+		$this->assertSame( "Éditions Exemple — 2026-01-01\n", $twig->render( 'date/format-and-global.twig', $this->moment() ) );
 	}
 	/**
 	 * The container reads "%name%" as one of its own parameters, so a doubled percent

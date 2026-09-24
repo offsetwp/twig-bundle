@@ -66,6 +66,6 @@ final class YamlConfigurationTest extends UsageTestCase {
 			array( 'opened' => new \DateTimeImmutable( '2026-01-01 12:00:00', new \DateTimeZone( 'UTC' ) ) )
 		);
 
-		$this->assertSame( "spring-concert-2026|Étoile Malraux|01/01/2026|1 234,50\n", $rendered );
+		$this->assertSame( "hello-world-2026|Éditions Exemple|01/01/2026|1 234,50\n", $rendered );
 	}
 }

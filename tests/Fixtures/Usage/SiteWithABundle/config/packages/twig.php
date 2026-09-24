@@ -21,7 +21,7 @@ return static function ( ContainerConfigurator $container ): void {
 				__DIR__ . '/../../extra-templates' => 'project',
 			),
 			'globals' => array(
-				'association' => 'Étoile Malraux',
+				'owner' => 'Éditions Exemple',
 			),
 		)
 	);

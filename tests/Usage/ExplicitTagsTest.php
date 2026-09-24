@@ -30,7 +30,7 @@ final class ExplicitTagsTest extends UsageTestCase {
 	 */
 	public function testExtensionsAttributesAndRuntimesWorkThroughTags(): void {
 		$this->assertSame(
-			"spring-concert-2026|120.00|60.00|25|yes\n",
+			"hello-world-2026|120.00|60.00|25|yes\n",
 			$this->twig( $this->boot( 'SiteWithTags' ) )->render( 'site.twig' )
 		);
 	}

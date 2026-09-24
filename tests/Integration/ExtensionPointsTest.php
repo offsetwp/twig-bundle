@@ -464,8 +464,8 @@ final class ExtensionPointsTest extends KernelTestCase {
 	 */
 	public function testAScalarGlobalIsAvailableInTemplates(): void {
 		$this->assertSame(
-			"Étoile Malraux\n",
-			$this->renderGlobal( array( 'site_name' => 'Étoile Malraux' ), 'global/scalar.twig' )
+			"Éditions Exemple\n",
+			$this->renderGlobal( array( 'site_name' => 'Éditions Exemple' ), 'global/scalar.twig' )
 		);
 	}
 
@@ -477,7 +477,7 @@ final class ExtensionPointsTest extends KernelTestCase {
 	 */
 	public function testAParameterGlobalIsResolved(): void {
 		$this->assertSame(
-			"Étoile Malraux\n",
+			"Éditions Exemple\n",
 			$this->renderGlobal( array( 'site' => '%app.name%' ), 'global/parameter.twig' )
 		);
 	}
@@ -498,7 +498,7 @@ final class ExtensionPointsTest extends KernelTestCase {
 						'count'     => 3,
 						'enabled'   => true,
 						'menu'      => array( 'home', 'contact' ),
-						'site-name' => 'Étoile Malraux',
+						'site-name' => 'Éditions Exemple',
 					),
 				)
 			)
@@ -507,7 +507,7 @@ final class ExtensionPointsTest extends KernelTestCase {
 		$this->assertSame( 3, $globals['count'] );
 		$this->assertTrue( $globals['enabled'] );
 		$this->assertSame( array( 'home', 'contact' ), $globals['menu'] );
-		$this->assertSame( 'Étoile Malraux', $globals['site-name'] );
+		$this->assertSame( 'Éditions Exemple', $globals['site-name'] );
 	}
 
 	/**

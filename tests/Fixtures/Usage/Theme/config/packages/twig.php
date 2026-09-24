@@ -19,7 +19,7 @@ return static function ( ContainerConfigurator $container ): void {
 		'twig',
 		array(
 			'globals' => array(
-				'association' => 'Le thème',
+				'owner' => 'Le thème',
 			),
 		)
 	);

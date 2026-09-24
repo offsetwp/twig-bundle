@@ -7,7 +7,7 @@ twig:
     paths:
         '%kernel.root_path%/mail': mail
     globals:
-        association: 'Étoile Malraux'
+        owner: 'Éditions Exemple'
     date:
         format: 'd/m/Y'
         timezone: 'Europe/Paris'

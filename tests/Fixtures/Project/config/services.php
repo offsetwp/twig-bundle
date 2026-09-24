@@ -15,7 +15,7 @@ use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\MemoryCache;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function ( ContainerConfigurator $container ): void {
-	$container->parameters()->set( 'app.name', 'Étoile Malraux' );
+	$container->parameters()->set( 'app.name', 'Éditions Exemple' );
 
 	$services = $container->services();
 

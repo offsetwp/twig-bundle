@@ -23,7 +23,7 @@ return static function ( ContainerConfigurator $container ): void {
 				'%kernel.root_path%/mail' => 'mail',
 			),
 			'globals'       => array(
-				'association' => 'Étoile Malraux',
+				'owner' => 'Éditions Exemple',
 			),
 			'date'          => array(
 				'format'   => 'd/m/Y',

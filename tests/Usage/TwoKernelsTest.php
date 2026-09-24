@@ -61,7 +61,7 @@ final class TwoKernelsTest extends UsageTestCase {
 	public function testEachProjectKeepsItsOwnConfiguration(): void {
 		list( $site, $theme ) = $this->bootBoth();
 
-		$this->assertSame( "Étoile Malraux\n", $this->twig( $site )->render( 'owner.twig' ) );
+		$this->assertSame( "Éditions Exemple\n", $this->twig( $site )->render( 'owner.twig' ) );
 		$this->assertSame( "Le thème\n", $this->twig( $theme )->render( 'owner.twig' ) );
 	}
 

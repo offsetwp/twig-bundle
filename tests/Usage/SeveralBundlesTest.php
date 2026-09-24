@@ -46,7 +46,7 @@ final class SeveralBundlesTest extends UsageTestCase {
 	 * @return void
 	 */
 	public function testTheProjectsOwnConfigurationSurvivesThePrepending(): void {
-		$this->assertSame( "Étoile Malraux\n", $this->twig( $this->boot( 'SiteWithABundle' ) )->render( 'owner.twig' ) );
+		$this->assertSame( "Éditions Exemple\n", $this->twig( $this->boot( 'SiteWithABundle' ) )->render( 'owner.twig' ) );
 	}
 
 	/**
