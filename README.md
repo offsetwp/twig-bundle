@@ -125,6 +125,7 @@ Twig integrations expect — a bundle made for one of them finds what it reaches
 | `Twig\Environment` | an alias of `twig`, which is what autowiring reads |
 | `twig.loader` | an alias of the loader the environment reads from |
 | `Twig\Loader\LoaderInterface` | the same alias, under the interface |
+| `twig.runtime.escaper` | Twig's escaper runtime, built with the configured `charset` — see [Safe classes](#safe-classes) |
 
 A compiler pass edits the environment under `twig`. `getDefinition()` does not follow an
 alias, so a pass asking it for `Twig\Environment` is told there is no such service: ask for
@@ -672,6 +673,44 @@ final class Menu {
 ```twig
 {% for item in menu() %}…{% endfor %}
 ```
+
+## Safe classes
+
+An object a template prints is escaped like any other value, so one that renders its own
+markup — a bag of HTML attributes, a fragment rendered ahead of time — comes out as
+`class=&quot;alert&quot;`. Mark its class safe for the strategies its output is already
+escaped for:
+
+```php
+// config/services.php
+use App\Twig\Attributes;
+
+$services->set( Attributes::class )
+	->resourceTag( 'twig.safe_class', array( 'strategy' => 'html' ) );
+```
+
+```twig
+<div{{ attributes }}>   {# printed as it is #}
+```
+
+`strategy` is required, as one name or a list of them: Twig's own `html`, `js`, `css`, `url`,
+`html_attr` and `html_attr_relaxed`, `all` for every strategy at once, or the name of one you
+registered yourself. A subclass is safe wherever its parent is.
+
+Only autoescaping reads the mark. `{{ attributes|e }}` escapes the object all the same, and so
+does an `{% autoescape 'js' %}` block for a class marked `html` only.
+
+`resourceTag()`, not `tag()`: the definition only carries the mark, and is never built. A class
+that is also a service of yours keeps the definition it has, and gets a second one for the
+mark, under an id of its own:
+
+```php
+$services->set( 'app.safe.attributes', Attributes::class )
+	->resourceTag( 'twig.safe_class', array( 'strategy' => 'html' ) );
+```
+
+A plain `tag()`, and a strategy that is missing, empty or misspelt, are refused when the
+container builds, naming the service.
 
 ## Custom loaders
 

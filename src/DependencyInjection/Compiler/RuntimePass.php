@@ -28,7 +28,9 @@ use Twig\RuntimeLoader\ContainerRuntimeLoader;
  * are constructed on the first template call that actually reaches one.
  *
  * Nothing is built when nothing is tagged, and nothing is ever made public: a locator
- * holds references, which is all it needs.
+ * holds references, which is all it needs. In a project something always is tagged —
+ * this bundle registers Twig's escaper runtime itself — so the loader is always there,
+ * and it still builds nothing before a template first escapes a value.
  *
  * The locator answers to class names, which is the whole of what Twig asks it. So a
  * runtime with no class of its own cannot be found, and one class registered as two

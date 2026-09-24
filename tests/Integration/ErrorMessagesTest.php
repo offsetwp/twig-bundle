@@ -16,6 +16,7 @@ use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\LoaderPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\OwnershipPass;
 use OffsetWP\Bundle\TwigBundle\Environment\CoreSettings;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\RuntimePass;
+use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\SafeClassPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\TaggedServicesTrait;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\HiddenFilterExtension;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\CurrencyRates;
@@ -23,6 +24,7 @@ use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\NotAnExtension;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\PriceExtension;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\ShopExtension;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\KernelTestCase;
+use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Markup\HtmlSnippet;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\TestKernel;
 use OffsetWP\Bundle\TwigBundle\Twig;
 use OffsetWP\Bundle\TwigBundle\TwigBundle;
@@ -43,11 +45,12 @@ use Twig\Loader\FilesystemLoader;
 #[CoversClass( ExtensionPass::class )]
 #[CoversClass( LoaderPass::class )]
 #[CoversClass( RuntimePass::class )]
+#[CoversClass( SafeClassPass::class )]
 #[CoversClass( Twig::class )]
 #[CoversTrait( TaggedServicesTrait::class )]
 final class ErrorMessagesTest extends KernelTestCase {
 	/**
-	 * The three services a project can plausibly write in its own config/services.php
+	 * The four services a project can plausibly write in its own config/services.php
 	 * under the same id this bundle uses.
 	 *
 	 * @return array<string, array{string}>
@@ -57,6 +60,7 @@ final class ErrorMessagesTest extends KernelTestCase {
 			'the environment'       => array( 'twig' ),
 			'the filesystem loader' => array( FilesystemLoader::class ),
 			'the core settings'     => array( CoreSettings::class ),
+			'the escaper'           => array( 'twig.runtime.escaper' ),
 		);
 	}
 
@@ -413,6 +417,28 @@ final class ErrorMessagesTest extends KernelTestCase {
 				$container->register( HiddenFilterExtension::class, HiddenFilterExtension::class )
 					->setAutowired( true )
 					->setAutoconfigured( true );
+			}
+		);
+	}
+
+	/**
+	 * A class marked safe with a strategy Twig will never be asked for is a mark that
+	 * does nothing, on a page that prints its markup escaped. Refused while the container
+	 * builds instead, naming the service and saying what a strategy looks like.
+	 *
+	 * @return void
+	 */
+	public function testAMisspeltSafeClassStrategyIsRefusedAndNamesTheService(): void {
+		$this->expectException( \InvalidArgumentException::class );
+		$this->expectExceptionMessage(
+			'The service "app.snippet" is tagged "twig.safe_class" with the strategy "HTML". A strategy is one Twig ships — html, js, css, url, html_attr or html_attr_relaxed — "all" for every one of them, or one of your own, named in lowercase letters, digits and underscores and starting with a letter.'
+		);
+
+		$this->boot(
+			array(),
+			static function ( ContainerBuilder $container ): void {
+				$container->register( 'app.snippet', HtmlSnippet::class )
+					->addResourceTag( 'twig.safe_class', array( 'strategy' => 'HTML' ) );
 			}
 		);
 	}

@@ -14,11 +14,13 @@ use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\ExtensionPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\LoaderPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\OwnershipPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\RuntimePass;
+use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\SafeClassPass;
 use OffsetWP\Bundle\TwigBundle\Environment\CoreSettings;
 use OffsetWP\Bundle\TwigBundle\Loader\NoTemplateSourceLoader;
 use OffsetWP\Framework\Bundle\Bundle;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -111,6 +113,14 @@ final class TwigBundle extends Bundle {
 	 * them after the library's own tag resolution: by the time they read a tag, the
 	 * classes are resolved and everything autoconfiguration had to add has been added.
 	 *
+	 * All but the one reading safe classes, which runs last, just before the container
+	 * removes what nothing uses. A class is marked safe by whoever needs it to be — the
+	 * compiler pass of another bundle as readily as a services file — and read at the
+	 * default priority, a mark placed by a pass that happened to run after this one was
+	 * missed without a word. Last is also where extensions written for other Twig
+	 * integrations expect the mark to be read. What the pass writes, a few calls on the
+	 * escaper holding nothing but strings, needs nothing done to it afterwards.
+	 *
 	 * @param ContainerBuilder $container The service container.
 	 * @return void
 	 */
@@ -152,6 +162,7 @@ final class TwigBundle extends Bundle {
 		$container->addCompilerPass( new LoaderPass() );
 		$container->addCompilerPass( new ExtensionPass() );
 		$container->addCompilerPass( new RuntimePass() );
+		$container->addCompilerPass( new SafeClassPass(), PassConfig::TYPE_BEFORE_REMOVING );
 	}
 
 	/**
@@ -237,6 +248,12 @@ final class TwigBundle extends Bundle {
 		foreach ( $config['extensions'] as $class ) {
 			$this->registerConfiguredExtension( $builder, $class );
 		}
+
+		/*
+		 * The escaper escapes in the charset it was built with. Twig builds its own with
+		 * the environment's; built here instead, it has to be handed the same one.
+		 */
+		$builder->getDefinition( SafeClassPass::ESCAPER_ID )->replaceArgument( 0, $config['charset'] );
 
 		$builder->getDefinition( CoreSettings::class )
 			->replaceArgument( 0, $config['date'] )

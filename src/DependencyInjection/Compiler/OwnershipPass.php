@@ -59,7 +59,7 @@ final class OwnershipPass implements CompilerPassInterface {
 	 *
 	 * @var array<int, string>
 	 */
-	private const OWNED_IDS = array( TwigBundle::ENVIRONMENT_ID, FilesystemLoader::class, CoreSettings::class );
+	private const OWNED_IDS = array( TwigBundle::ENVIRONMENT_ID, FilesystemLoader::class, CoreSettings::class, SafeClassPass::ESCAPER_ID );
 
 	/**
 	 * {@inheritDoc}

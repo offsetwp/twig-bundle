@@ -167,7 +167,11 @@ final class RuntimePassTest extends TestCase {
 	}
 
 	/**
-	 * A project using no runtime pays nothing: no locator, no loader, no call.
+	 * Nothing tagged, nothing added: no locator, no loader, no call.
+	 *
+	 * That is the pass on its own. A project always has one runtime — the escaper this
+	 * bundle registers itself — so there the loader is always added, and still builds
+	 * nothing before a template first escapes a value.
 	 *
 	 * @return void
 	 */

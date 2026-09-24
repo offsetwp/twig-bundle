@@ -16,12 +16,15 @@ declare( strict_types=1 );
 
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\LoaderPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\OwnershipPass;
+use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\RuntimePass;
+use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\SafeClassPass;
 use OffsetWP\Bundle\TwigBundle\Environment\CoreSettings;
 use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\Loader\LoaderInterface;
+use Twig\Runtime\EscaperRuntime;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -95,4 +98,18 @@ return static function ( ContainerConfigurator $container ): void {
 
 	$services->alias( Environment::class, TwigBundle::ENVIRONMENT_ID )
 		->public();
+
+	/*
+	 * Twig's escaper runtime, defined here rather than left to Twig. The safe-class pass
+	 * needs a definition to add the marked classes to, and extensions written for other
+	 * Twig integrations reach the escaper under this id. The runtime tag is what hands
+	 * it to Twig: the environment asks the runtime loaders it was given before the one
+	 * it builds for itself, so this is the escaper every template uses.
+	 *
+	 * The charset is Twig's own default until the configuration replaces it.
+	 */
+	$services->set( SafeClassPass::ESCAPER_ID, EscaperRuntime::class )
+		->args( array( 'UTF-8' ) )
+		->tag( RuntimePass::RUNTIME_TAG )
+		->tag( OwnershipPass::OWNED_TAG );
 };
