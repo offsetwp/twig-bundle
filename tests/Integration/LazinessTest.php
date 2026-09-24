@@ -91,20 +91,27 @@ final class LazinessTest extends KernelTestCase {
 	 * And the other half: a template that does use the filter constructs the class,
 	 * once, however many times it renders afterwards.
 	 *
+	 * The three readings are taken first and compared once. Asserted one by one, each
+	 * assertion pinned the counter for the static analyser, which then carried the
+	 * pinned value across the render that changes it and reported the next assertion
+	 * as settled in advance.
+	 *
 	 * @return void
 	 */
 	public function testAUsedAttributedClassIsConstructedExactlyOnce(): void {
 		$twig = $this->twig( $this->bootCounted() );
 
-		$this->assertSame( 0, CountedExtension::$constructions );
+		$constructions = array( CountedExtension::$constructions );
 
 		$twig->render( 'laziness/uses-filter.twig' );
 
-		$this->assertSame( 1, CountedExtension::$constructions );
+		$constructions[] = CountedExtension::$constructions;
 
 		$twig->render( 'laziness/uses-filter.twig' );
 
-		$this->assertSame( 1, CountedExtension::$constructions );
+		$constructions[] = CountedExtension::$constructions;
+
+		$this->assertSame( array( 0, 1, 1 ), $constructions );
 	}
 
 	/**
