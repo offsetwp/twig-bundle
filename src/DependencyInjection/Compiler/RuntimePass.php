@@ -10,12 +10,12 @@ declare( strict_types=1 );
 
 namespace OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler;
 
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
-use Twig\Environment;
 use Twig\RuntimeLoader\ContainerRuntimeLoader;
 
 /**
@@ -54,7 +54,7 @@ final class RuntimePass implements CompilerPassInterface {
 	 * @return void
 	 */
 	public function process( ContainerBuilder $container ): void {
-		if ( ! $container->hasDefinition( Environment::class ) ) {
+		if ( ! $container->hasDefinition( TwigBundle::ENVIRONMENT_ID ) ) {
 			return;
 		}
 
@@ -89,7 +89,7 @@ final class RuntimePass implements CompilerPassInterface {
 			return;
 		}
 
-		$container->getDefinition( Environment::class )->addMethodCall(
+		$container->getDefinition( TwigBundle::ENVIRONMENT_ID )->addMethodCall(
 			'addRuntimeLoader',
 			array(
 				new Definition(

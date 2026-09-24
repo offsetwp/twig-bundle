@@ -21,7 +21,6 @@ use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
-use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 /**
@@ -323,7 +322,7 @@ final class ConfigurationTest extends TestCase {
 	public function testTheEnvironmentIsConfiguredByTheCoreSettings(): void {
 		$container = $this->load( array(), '/srv/site' );
 
-		$configurator = $container->getDefinition( Environment::class )->getConfigurator();
+		$configurator = $container->getDefinition( TwigBundle::ENVIRONMENT_ID )->getConfigurator();
 
 		$this->assertIsArray( $configurator );
 		$this->assertCount( 2, $configurator );

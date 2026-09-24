@@ -139,7 +139,7 @@ final class Twig {
 	 * @return bool
 	 */
 	public static function booted(): bool {
-		return null !== self::$container && self::$container->has( 'twig' );
+		return null !== self::$container && self::$container->has( TwigBundle::ENVIRONMENT_ID );
 	}
 
 	/**
@@ -174,7 +174,7 @@ final class Twig {
 	 * @return Environment
 	 */
 	private static function fromContainer( ContainerInterface $container, ?string $root_path ): Environment {
-		if ( ! $container->has( 'twig' ) ) {
+		if ( ! $container->has( TwigBundle::ENVIRONMENT_ID ) ) {
 			throw new \LogicException(
 				null === $root_path
 					? sprintf( 'This container has no "twig" service. Add %s to the config/bundles.php of its kernel.', TwigBundle::class )
@@ -182,7 +182,7 @@ final class Twig {
 			);
 		}
 
-		$twig = $container->get( 'twig' );
+		$twig = $container->get( TwigBundle::ENVIRONMENT_ID );
 
 		if ( ! $twig instanceof Environment ) {
 			throw new \LogicException(

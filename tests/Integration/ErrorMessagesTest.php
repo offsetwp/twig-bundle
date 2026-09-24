@@ -54,7 +54,7 @@ final class ErrorMessagesTest extends KernelTestCase {
 	 */
 	public static function servicesTheBundleOwns(): array {
 		return array(
-			'the environment'       => array( Environment::class ),
+			'the environment'       => array( 'twig' ),
 			'the filesystem loader' => array( FilesystemLoader::class ),
 			'the core settings'     => array( CoreSettings::class ),
 		);
@@ -91,10 +91,99 @@ final class ErrorMessagesTest extends KernelTestCase {
 	}
 
 	/**
+	 * An alias takes an id as surely as a definition does: setting one removes the
+	 * definition under the same id, and the library restores a project's aliases after
+	 * every bundle's definitions, so the project's always comes last.
+	 *
+	 * Under "twig" it was worse than a lost configuration. Every compiler pass that
+	 * edits the environment asks whether a definition sits there first — this bundle's
+	 * and other bundles' alike — and each one answered no and did nothing.
+	 *
+	 * @param string $id The service id the project aliased.
+	 * @return void
+	 */
+	#[DataProvider( 'servicesTheBundleOwns' )]
+	public function testAliasingAServiceThisBundleBuildsIsRefused( string $id ): void {
+		$this->expectException( \LogicException::class );
+		$this->expectExceptionMessage(
+			sprintf( 'The service "%s" is an alias of "app.own" in this project, and an alias takes the place of the definition the Twig bundle keeps under that id', $id )
+		);
+
+		$this->boot(
+			array(),
+			static function ( ContainerBuilder $container ) use ( $id ): void {
+				$container->register( 'app.own', \stdClass::class );
+				$container->setAlias( $id, 'app.own' );
+			}
+		);
+	}
+
+	/**
+	 * The class name of the environment is the one id this bundle aliases rather than
+	 * defines, and autowiring reads it. A project defining a service there gave every
+	 * constructor type-hinted on the class an environment of its own, while twig()
+	 * went on rendering with this bundle's.
+	 *
+	 * @return void
+	 */
+	public function testDefiningTheEnvironmentClassIsRefused(): void {
+		$this->expectException( \LogicException::class );
+		$this->expectExceptionMessage(
+			sprintf( 'The service "%s" is defined by this project, while the Twig bundle keeps that id as an alias of "twig".', Environment::class )
+		);
+
+		$this->boot(
+			array(),
+			static function ( ContainerBuilder $container ): void {
+				$container->register( Environment::class, \stdClass::class );
+			}
+		);
+	}
+
+	/**
+	 * The same through an alias pointing elsewhere.
+	 *
+	 * @return void
+	 */
+	public function testAliasingTheEnvironmentClassElsewhereIsRefused(): void {
+		$this->expectException( \LogicException::class );
+		$this->expectExceptionMessage(
+			sprintf( 'The service "%s" is an alias of "app.twig" in this project, while the Twig bundle keeps that id as an alias of "twig".', Environment::class )
+		);
+
+		$this->boot(
+			array(),
+			static function ( ContainerBuilder $container ): void {
+				$container->register( 'app.twig', \stdClass::class );
+				$container->setAlias( Environment::class, 'app.twig' );
+			}
+		);
+	}
+
+	/**
+	 * And an alias saying what this bundle already says is left alone: the check is
+	 * about where the class name leads, not about who wrote the alias.
+	 *
+	 * @return void
+	 */
+	public function testAliasingTheEnvironmentClassToTwigIsAccepted(): void {
+		$twig = $this->twig(
+			$this->boot(
+				array(),
+				static function ( ContainerBuilder $container ): void {
+					$container->setAlias( Environment::class, 'twig' );
+				}
+			)
+		);
+
+		$this->assertSame( "Hello, Jérôme!\n", $twig->render( 'hello.twig', array( 'name' => 'Jérôme' ) ) );
+	}
+
+	/**
 	 * A cache written as "@service" and pointing at nothing. Left alone the container
-	 * refuses to build on "the service Twig\\Environment has a dependency on a
-	 * non-existent service", which names what was asked for and nothing about which
-	 * key asked — the same reason a global pointing at nothing is checked here too.
+	 * refuses to build on "the service "twig" has a dependency on a non-existent
+	 * service", which names what was asked for and nothing about which key asked — the
+	 * same reason a global pointing at nothing is checked here too.
 	 *
 	 * @return void
 	 */

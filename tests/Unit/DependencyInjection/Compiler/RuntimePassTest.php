@@ -12,6 +12,7 @@ namespace OffsetWP\Bundle\TwigBundle\Tests\Unit\DependencyInjection\Compiler;
 
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\RuntimePass;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\RatesRuntime;
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -33,7 +34,7 @@ final class RuntimePassTest extends TestCase {
 	 */
 	private function container(): ContainerBuilder {
 		$container = new ContainerBuilder();
-		$container->register( Environment::class, Environment::class );
+		$container->register( TwigBundle::ENVIRONMENT_ID, Environment::class );
 
 		return $container;
 	}
@@ -45,7 +46,7 @@ final class RuntimePassTest extends TestCase {
 	 * @return Definition|null
 	 */
 	private function runtimeLoader( ContainerBuilder $container ): ?Definition {
-		foreach ( $container->getDefinition( Environment::class )->getMethodCalls() as $call ) {
+		foreach ( $container->getDefinition( TwigBundle::ENVIRONMENT_ID )->getMethodCalls() as $call ) {
 			if ( ! is_array( $call ) || 'addRuntimeLoader' !== ( $call[0] ?? null ) ) {
 				continue;
 			}
@@ -162,7 +163,7 @@ final class RuntimePassTest extends TestCase {
 
 		( new RuntimePass() )->process( $container );
 
-		$this->assertFalse( $container->hasDefinition( Environment::class ) );
+		$this->assertFalse( $container->hasDefinition( TwigBundle::ENVIRONMENT_ID ) );
 	}
 
 	/**
@@ -176,7 +177,7 @@ final class RuntimePassTest extends TestCase {
 		( new RuntimePass() )->process( $container );
 
 		$this->assertNull( $this->runtimeLoader( $container ) );
-		$this->assertSame( array(), $container->getDefinition( Environment::class )->getMethodCalls() );
+		$this->assertSame( array(), $container->getDefinition( TwigBundle::ENVIRONMENT_ID )->getMethodCalls() );
 	}
 
 	/**

@@ -113,7 +113,22 @@ if ( Twig::booted() ) { /* … */ }
 $kernel->service( 'twig' )->render( 'emails/welcome.twig' );
 ```
 
-The same object the helper hands back, with no facade and no global.
+The same object the helper hands back, with no facade and no global. A constructor
+type-hinted on `Twig\Environment` receives it too.
+
+These are the ids this bundle answers to, and they are the ones extensions written for other
+Twig integrations expect — a bundle made for one of them finds what it reaches for:
+
+| Id | What it is |
+|---|---|
+| `twig` | the environment — the definition itself |
+| `Twig\Environment` | an alias of `twig`, which is what autowiring reads |
+| `twig.loader` | an alias of the loader the environment reads from |
+| `Twig\Loader\LoaderInterface` | the same alias, under the interface |
+
+A compiler pass edits the environment under `twig`. `getDefinition()` does not follow an
+alias, so a pass asking it for `Twig\Environment` is told there is no such service: ask for
+`twig`, or call `findDefinition()`, which follows the alias.
 
 ### Several kernels in one request
 
@@ -966,8 +981,14 @@ before its extensions initialise. Expose a function instead — see [Globals](#g
 
 A build saying a service of this bundle is defined by your project as well means your own
 `config/services.php` redefined one of its ids, and everything the `twig` configuration had
-put on it — options, paths, globals, extensions — went with it. The message names the id.
-Configure `twig` instead, or register your own service under an id of your own.
+put on it — options, paths, globals, extensions — went with it. An alias written under one of
+those ids does the same, and is refused the same way. The message names the id. Configure
+`twig` instead, or register your own service under an id of your own.
+
+`Twig\Environment` is the one id the other way round. This bundle keeps it as an alias of
+`twig`, so what is refused there is a definition of yours, or an alias pointing anywhere else:
+every service type-hinted on the class would receive an environment none of your
+configuration reached.
 
 ### Nothing happens at all
 

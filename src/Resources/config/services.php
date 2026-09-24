@@ -17,6 +17,7 @@ declare( strict_types=1 );
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\LoaderPass;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\OwnershipPass;
 use OffsetWP\Bundle\TwigBundle\Environment\CoreSettings;
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -75,16 +76,23 @@ return static function ( ContainerConfigurator $container ): void {
 		->tag( OwnershipPass::OWNED_TAG );
 
 	/*
-	 * Public on purpose. The container is compiled but never dumped, so a private
-	 * service is reachable today and would stop being reachable the day that
+	 * The environment is defined under "twig" and its class name is the alias, not the
+	 * other way round. Extensions written for other Twig integrations look for a
+	 * definition under that id and edit it, and hasDefinition() and getDefinition() do
+	 * not follow an alias: with the two swapped, their compiler passes found nothing
+	 * and said nothing. Autowiring follows an alias, so a constructor type-hinted on
+	 * the class receives this same service.
+	 *
+	 * Both are public on purpose. The container is compiled but never dumped, so a
+	 * private service is reachable today and would stop being reachable the day that
 	 * changes. The entry point of this bundle depends on both ids resolving.
 	 */
-	$services->set( Environment::class )
+	$services->set( TwigBundle::ENVIRONMENT_ID, Environment::class )
 		->args( array( service( LoaderInterface::class ), array() ) )
 		->configurator( array( service( CoreSettings::class ), '__invoke' ) )
 		->tag( OwnershipPass::OWNED_TAG )
 		->public();
 
-	$services->alias( 'twig', Environment::class )
+	$services->alias( Environment::class, TwigBundle::ENVIRONMENT_ID )
 		->public();
 };

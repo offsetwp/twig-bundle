@@ -10,6 +10,7 @@ declare( strict_types=1 );
 
 namespace OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler;
 
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -17,7 +18,6 @@ use Symfony\Component\DependencyInjection\Reference;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Attribute\AsTwigTest;
-use Twig\Environment;
 use Twig\Extension\AttributeExtension;
 use Twig\Extension\ExtensionInterface;
 use Twig\NodeVisitor\NodeVisitorInterface;
@@ -92,11 +92,11 @@ final class ExtensionPass implements CompilerPassInterface {
 	 * @return void
 	 */
 	public function process( ContainerBuilder $container ): void {
-		if ( ! $container->hasDefinition( Environment::class ) ) {
+		if ( ! $container->hasDefinition( TwigBundle::ENVIRONMENT_ID ) ) {
 			return;
 		}
 
-		$twig = $container->getDefinition( Environment::class );
+		$twig = $container->getDefinition( TwigBundle::ENVIRONMENT_ID );
 
 		$this->assertGlobalsResolve( $container, $twig );
 		$this->assertCacheResolves( $container, $twig );
@@ -148,8 +148,8 @@ final class ExtensionPass implements CompilerPassInterface {
 	 *
 	 * Same reason as the globals above, and the same impossibility of checking it
 	 * where the value is written. Left alone the container refuses to build on "the
-	 * service Twig\Environment has a dependency on a non-existent service", which
-	 * names the service that was asked for and nothing about which key asked.
+	 * service "twig" has a dependency on a non-existent service", which names the
+	 * service that was asked for and nothing about which key asked.
 	 *
 	 * @param ContainerBuilder $container The service container.
 	 * @param Definition       $twig      The environment definition.

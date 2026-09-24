@@ -119,14 +119,21 @@ final class ZeroConfigurationTest extends KernelTestCase {
 	 * point resolves are therefore declared public, and that is asserted on the
 	 * definitions themselves rather than on a get() that would succeed either way.
 	 *
+	 * Which of the two is the definition is asserted as well, under the literal id rather
+	 * than a constant. Extensions written for other Twig integrations test for a
+	 * definition under "twig" before they edit it, and an alias there fails that test
+	 * without a word.
+	 *
 	 * @return void
 	 */
 	public function testTheTwigServiceAndItsClassAliasArePublic(): void {
 		$container = $this->containerOf( $this->boot() );
 
-		$this->assertTrue( $container->hasAlias( 'twig' ) );
-		$this->assertTrue( $container->getAlias( 'twig' )->isPublic() );
-		$this->assertTrue( $container->getDefinition( Environment::class )->isPublic() );
+		$this->assertTrue( $container->hasDefinition( 'twig' ) );
+		$this->assertTrue( $container->getDefinition( 'twig' )->isPublic() );
+		$this->assertTrue( $container->hasAlias( Environment::class ) );
+		$this->assertSame( 'twig', (string) $container->getAlias( Environment::class ) );
+		$this->assertTrue( $container->getAlias( Environment::class )->isPublic() );
 	}
 
 	/**

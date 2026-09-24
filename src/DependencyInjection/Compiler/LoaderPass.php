@@ -11,11 +11,11 @@ declare( strict_types=1 );
 namespace OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler;
 
 use OffsetWP\Bundle\TwigBundle\Loader\NoTemplateSourceLoader;
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
-use Twig\Environment;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
 use Twig\Loader\LoaderInterface;
@@ -85,7 +85,7 @@ final class LoaderPass implements CompilerPassInterface {
 	 * @return void
 	 */
 	public function process( ContainerBuilder $container ): void {
-		if ( ! $container->hasDefinition( Environment::class ) ) {
+		if ( ! $container->hasDefinition( TwigBundle::ENVIRONMENT_ID ) ) {
 			return;
 		}
 

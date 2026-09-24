@@ -13,6 +13,7 @@ namespace OffsetWP\Bundle\TwigBundle\Tests\Unit\DependencyInjection\Compiler;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\ExtensionPass;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\GreetingExtension;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\ShopExtension;
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -34,7 +35,7 @@ final class ExtensionPassTest extends TestCase {
 	 */
 	private function container(): ContainerBuilder {
 		$container = new ContainerBuilder();
-		$container->register( Environment::class, Environment::class );
+		$container->register( TwigBundle::ENVIRONMENT_ID, Environment::class );
 
 		return $container;
 	}
@@ -48,7 +49,7 @@ final class ExtensionPassTest extends TestCase {
 	private function addedExtensions( ContainerBuilder $container ): array {
 		$ids = array();
 
-		foreach ( $container->getDefinition( Environment::class )->getMethodCalls() as $call ) {
+		foreach ( $container->getDefinition( TwigBundle::ENVIRONMENT_ID )->getMethodCalls() as $call ) {
 			if ( ! is_array( $call ) || 'addExtension' !== ( $call[0] ?? null ) ) {
 				continue;
 			}
@@ -115,7 +116,7 @@ final class ExtensionPassTest extends TestCase {
 
 		( new ExtensionPass() )->process( $container );
 
-		$this->assertSame( array(), $container->getDefinition( Environment::class )->getMethodCalls() );
+		$this->assertSame( array(), $container->getDefinition( TwigBundle::ENVIRONMENT_ID )->getMethodCalls() );
 	}
 
 	/**
@@ -233,7 +234,7 @@ final class ExtensionPassTest extends TestCase {
 
 		( new ExtensionPass() )->process( $container );
 
-		$this->assertFalse( $container->hasDefinition( Environment::class ) );
+		$this->assertFalse( $container->hasDefinition( TwigBundle::ENVIRONMENT_ID ) );
 	}
 
 	/**

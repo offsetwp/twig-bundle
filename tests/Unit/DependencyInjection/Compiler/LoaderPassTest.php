@@ -13,6 +13,7 @@ namespace OffsetWP\Bundle\TwigBundle\Tests\Unit\DependencyInjection\Compiler;
 use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\LoaderPass;
 use OffsetWP\Bundle\TwigBundle\Loader\NoTemplateSourceLoader;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\MemoryLoader;
+use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +37,7 @@ final class LoaderPassTest extends TestCase {
 	 */
 	private function container(): ContainerBuilder {
 		$container = new ContainerBuilder();
-		$container->register( Environment::class, Environment::class );
+		$container->register( TwigBundle::ENVIRONMENT_ID, Environment::class );
 		$container->register( NoTemplateSourceLoader::class, NoTemplateSourceLoader::class )
 			->setArguments( array( '/nowhere/templates' ) );
 

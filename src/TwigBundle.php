@@ -26,7 +26,6 @@ use Symfony\Component\DependencyInjection\Reference;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Attribute\AsTwigTest;
-use Twig\Environment;
 use Twig\Extension\ExtensionInterface;
 use Twig\Extension\RuntimeExtensionInterface;
 use Twig\Loader\FilesystemLoader;
@@ -58,6 +57,20 @@ final class TwigBundle extends Bundle {
 	 * @var string
 	 */
 	public const ALIAS = 'twig';
+
+	/**
+	 * The id the environment is defined under.
+	 *
+	 * It reads the same as the configuration key and names something else: a service,
+	 * not a key. The environment is defined under this id and its class name is an
+	 * alias of it, not the other way round, because extensions written for other Twig
+	 * integrations look for it with hasDefinition() and edit it with getDefinition() —
+	 * and neither follows an alias. Autowiring does, so a constructor type-hinted on
+	 * the class still receives this very service.
+	 *
+	 * @var string
+	 */
+	public const ENVIRONMENT_ID = 'twig';
 
 	/**
 	 * The directory searched when the host configures no template path.
@@ -200,7 +213,7 @@ final class TwigBundle extends Bundle {
 		 * here is a key Twig fills with its own default, which is what keeps every
 		 * default identical to Twig's.
 		 */
-		$builder->getDefinition( Environment::class )->replaceArgument(
+		$builder->getDefinition( self::ENVIRONMENT_ID )->replaceArgument(
 			1,
 			array(
 				'debug'            => $config['debug'],
@@ -215,7 +228,7 @@ final class TwigBundle extends Bundle {
 		);
 
 		foreach ( $config['globals'] as $name => $value ) {
-			$builder->getDefinition( Environment::class )->addMethodCall(
+			$builder->getDefinition( self::ENVIRONMENT_ID )->addMethodCall(
 				'addGlobal',
 				array( (string) $name, $this->globalValue( $value ) )
 			);

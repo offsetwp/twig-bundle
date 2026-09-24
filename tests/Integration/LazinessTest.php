@@ -18,7 +18,6 @@ use OffsetWP\Bundle\TwigBundle\Twig;
 use OffsetWP\Bundle\TwigBundle\TwigBundle;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Twig\Environment;
 
 /**
  * Nothing unused is ever instantiated.
@@ -68,7 +67,7 @@ final class LazinessTest extends KernelTestCase {
 	public function testBootingTheKernelConstructsNothing(): void {
 		$container = $this->containerOf( $this->bootCounted() );
 
-		$this->assertFalse( $container->initialized( Environment::class ) );
+		$this->assertFalse( $container->initialized( TwigBundle::ENVIRONMENT_ID ) );
 		$this->assertSame( 0, CountedExtension::$constructions );
 		$this->assertSame( 0, StaticCountedExtension::$constructions );
 	}
@@ -132,13 +131,20 @@ final class LazinessTest extends KernelTestCase {
 	 * which does not exist yet and will not until somebody asks. The facade is ready
 	 * and the environment is still unbuilt.
 	 *
+	 * Until somebody asks, and then it is: the last assertion is what keeps the first
+	 * one honest. The container answers initialized() for a definition and never for an
+	 * alias — asked under an alias it says no before the environment exists and no
+	 * after, which is how a check passes while checking nothing.
+	 *
 	 * @return void
 	 */
 	public function testBootingRegistersTheContainerWithoutBuildingTheEnvironment(): void {
-		$kernel = $this->bootCounted();
+		$kernel    = $this->bootCounted();
+		$container = $this->containerOf( $kernel );
 
 		$this->assertTrue( Twig::booted() );
-		$this->assertFalse( $this->containerOf( $kernel )->initialized( Environment::class ) );
+		$this->assertFalse( $container->initialized( TwigBundle::ENVIRONMENT_ID ) );
 		$this->assertSame( $this->twig( $kernel ), Twig::environment() );
+		$this->assertTrue( $container->initialized( TwigBundle::ENVIRONMENT_ID ) );
 	}
 }
