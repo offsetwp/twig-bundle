@@ -35,7 +35,7 @@ final class NoTemplateSourceLoaderTest extends TestCase {
 	 *
 	 * @var string
 	 */
-	private const MESSAGE = 'Twig has no template source. The default directory "/nowhere/templates" does not exist and no "twig.paths" entry or "twig.loader" service is configured. Create that directory, or configure "twig.paths".';
+	private const MESSAGE = 'Twig has no template source. The default directory "/nowhere/templates" does not exist, and there is no "twig.paths" entry and no service tagged "twig.loader". Create that directory, or configure "twig.paths".';
 
 	/**
 	 * The loader under test.

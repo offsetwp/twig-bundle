@@ -676,8 +676,13 @@ final class DatabaseLoader implements LoaderInterface {
 ```
 
 With autoconfiguration on, nothing else is needed. Register it under an id of your own — its
-class name does the job; `Twig\Loader\LoaderInterface` is the id this bundle points at
-whichever loader it settles on, and a loader registered there is refused.
+class name does the job. `twig.loader` and `Twig\Loader\LoaderInterface` are the two ids this
+bundle points at whichever loader it settles on, and a loader registered under either is
+refused.
+
+`twig.loader` is the tag as well, and the two do not collide: the tag marks a template source,
+the id names the one the environment reads from — a chain, when there are several. A service
+that reads templates on its own takes the id, and reads them from the same source as Twig.
 
 With exactly one loader registered it is used directly, with no chain around it.
 
@@ -928,9 +933,9 @@ If the list is empty or missing a directory you expected, the `paths` you wrote 
 reached the loader. If the message is instead
 
 ```
-Twig has no template source. The default directory "/abs/templates" does not exist and no
-"twig.paths" entry or "twig.loader" service is configured. Create that directory, or
-configure "twig.paths".
+Twig has no template source. The default directory "/abs/templates" does not exist, and
+there is no "twig.paths" entry and no service tagged "twig.loader". Create that directory,
+or configure "twig.paths".
 ```
 
 then nothing provides templates at all: create that directory, or configure `twig.paths`.

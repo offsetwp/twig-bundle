@@ -44,7 +44,12 @@ return static function ( ContainerConfigurator $container ): void {
 		->tag( LoaderPass::LOADER_TAG, array( 'priority' => 0 ) )
 		->tag( OwnershipPass::OWNED_TAG );
 
+	/*
+	 * The two ids of the loader the environment reads from. The loader pass points both
+	 * at whichever loader it settles on; until it has run, they name the built-in one.
+	 */
 	$services->alias( LoaderInterface::class, FilesystemLoader::class );
+	$services->alias( LoaderPass::LOADER_ID, FilesystemLoader::class );
 
 	/*
 	 * The date and number settings live on the environment's own core extension, out

@@ -170,7 +170,7 @@ final class ErrorMessagesTest extends KernelTestCase {
 		$this->expectException( LoaderError::class );
 		$this->expectExceptionMessage(
 			sprintf(
-				'Twig has no template source. The default directory "%s" does not exist and no "twig.paths" entry or "twig.loader" service is configured. Create that directory, or configure "twig.paths".',
+				'Twig has no template source. The default directory "%s" does not exist, and there is no "twig.paths" entry and no service tagged "twig.loader". Create that directory, or configure "twig.paths".',
 				$root . '/templates'
 			)
 		);

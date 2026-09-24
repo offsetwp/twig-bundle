@@ -14,6 +14,7 @@ use OffsetWP\Bundle\TwigBundle\DependencyInjection\Compiler\LoaderPass;
 use OffsetWP\Bundle\TwigBundle\Loader\NoTemplateSourceLoader;
 use OffsetWP\Bundle\TwigBundle\Tests\Fixtures\Extension\MemoryLoader;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -43,15 +44,38 @@ final class LoaderPassTest extends TestCase {
 	}
 
 	/**
-	 * The id the loader interface points at after the pass has run.
+	 * The id both loader ids point at after the pass has run.
+	 *
+	 * The two are compared on every call rather than in a test of their own, so that
+	 * each outcome below — the stand-in, a single loader, a chain — proves it for itself.
+	 * Apart, a service injected with "twig.loader" would read templates from a loader
+	 * the environment does not use.
 	 *
 	 * @param ContainerBuilder $container The processed container.
 	 * @return string
 	 */
 	private function resolvedLoader( ContainerBuilder $container ): string {
 		$this->assertTrue( $container->hasAlias( LoaderInterface::class ) );
+		$this->assertTrue( $container->hasAlias( LoaderPass::LOADER_ID ) );
+		$this->assertSame(
+			(string) $container->getAlias( LoaderInterface::class ),
+			(string) $container->getAlias( LoaderPass::LOADER_ID )
+		);
 
 		return (string) $container->getAlias( LoaderInterface::class );
+	}
+
+	/**
+	 * The two ids the pass points at the loader it decides on, written the way a
+	 * service injecting them writes them.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function loaderIds(): array {
+		return array(
+			'the short id'  => array( 'twig.loader' ),
+			'the interface' => array( LoaderInterface::class ),
+		);
 	}
 
 	/**
@@ -69,6 +93,7 @@ final class LoaderPassTest extends TestCase {
 		( new LoaderPass() )->process( $container );
 
 		$this->assertFalse( $container->hasAlias( LoaderInterface::class ) );
+		$this->assertFalse( $container->hasAlias( LoaderPass::LOADER_ID ) );
 		$this->assertFalse( $container->hasDefinition( LoaderPass::CHAIN_ID ) );
 	}
 
@@ -181,24 +206,45 @@ final class LoaderPassTest extends TestCase {
 	}
 
 	/**
-	 * The interface id is this bundle's handle on whichever loader it settles on, not
-	 * a slot a host fills. A definition sitting there was aliased to itself, which the
-	 * library refuses with a message about a circular reference and nothing about Twig.
+	 * Both ids are this bundle's handles on whichever loader it settles on, not slots a
+	 * host fills. In a chain, a loader sitting under one was deleted by the alias that
+	 * replaced it, while the chain still held a reference to it.
 	 *
+	 * @param string $id The id the loader is registered under.
 	 * @return void
 	 */
-	public function testALoaderRegisteredUnderTheInterfaceIdIsRefused(): void {
+	#[DataProvider( 'loaderIds' )]
+	public function testALoaderRegisteredUnderALoaderIdIsRefused( string $id ): void {
 		$container = $this->container();
-		$container->register( LoaderInterface::class, MemoryLoader::class )->addTag( LoaderPass::LOADER_TAG );
+		$container->register( $id, MemoryLoader::class )->addTag( LoaderPass::LOADER_TAG );
+		$container->register( 'app.other', MemoryLoader::class )->addTag( LoaderPass::LOADER_TAG );
 
 		$this->expectException( \InvalidArgumentException::class );
 		$this->expectExceptionMessage(
 			sprintf(
 				'The loader "%s" is registered under the id "%s", which this bundle aliases to whichever loader it decides on.',
 				MemoryLoader::class,
-				LoaderInterface::class
+				$id
 			)
 		);
+
+		( new LoaderPass() )->process( $container );
+	}
+
+	/**
+	 * And alone, the alias pointed the id at itself, which the library refuses with a
+	 * message about a circular reference and nothing about Twig.
+	 *
+	 * @param string $id The id the loader is registered under.
+	 * @return void
+	 */
+	#[DataProvider( 'loaderIds' )]
+	public function testASingleLoaderRegisteredUnderALoaderIdIsRefused( string $id ): void {
+		$container = $this->container();
+		$container->register( $id, MemoryLoader::class )->addTag( LoaderPass::LOADER_TAG );
+
+		$this->expectException( \InvalidArgumentException::class );
+		$this->expectExceptionMessage( sprintf( 'is registered under the id "%s"', $id ) );
 
 		( new LoaderPass() )->process( $container );
 	}

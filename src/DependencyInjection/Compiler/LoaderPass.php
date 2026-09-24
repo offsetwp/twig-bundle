@@ -32,6 +32,11 @@ use Twig\Loader\LoaderInterface;
  * The built-in filesystem loader is dropped when the configuration gave it no path,
  * which is what makes replacing it entirely a matter of configuring none.
  *
+ * Whatever it decides answers to two ids: the loader interface, which is what autowiring
+ * reads, and "twig.loader", which is what extensions written for other Twig integrations
+ * inject. Both always name the same loader, so a service reading templates on its own
+ * reads them from the source the environment uses.
+ *
  * A service tagged as a loader whose class cannot load anything is refused here
  * rather than at the first render, where the failure would be a type error from
  * inside Twig naming nothing a reader can act on.
@@ -48,6 +53,17 @@ final class LoaderPass implements CompilerPassInterface {
 	public const LOADER_TAG = 'twig.loader';
 
 	/**
+	 * The id of the loader the environment reads from, whichever this pass decides on.
+	 *
+	 * It reads the same as the tag and names something else: a service, where the tag is
+	 * a mark on one. Tags and ids never meet, so sharing the name costs nothing — and it
+	 * is the name extensions written for other Twig integrations inject the loader under.
+	 *
+	 * @var string
+	 */
+	public const LOADER_ID = 'twig.loader';
+
+	/**
 	 * The id of the chain this pass builds when several loaders are registered.
 	 *
 	 * @var string
@@ -55,10 +71,17 @@ final class LoaderPass implements CompilerPassInterface {
 	public const CHAIN_ID = 'twig.loader.chain';
 
 	/**
+	 * The ids this pass points at the loader it decides on.
+	 *
+	 * @var array<int, string>
+	 */
+	private const LOADER_ALIASES = array( LoaderInterface::class, self::LOADER_ID );
+
+	/**
 	 * {@inheritDoc}
 	 *
 	 * @param ContainerBuilder $container The service container.
-	 * @throws \InvalidArgumentException When a tagged service is not a loader, or holds the id this pass needs.
+	 * @throws \InvalidArgumentException When a tagged service is not a loader, or holds an id this pass needs.
 	 * @return void
 	 */
 	public function process( ContainerBuilder $container ): void {
@@ -70,18 +93,32 @@ final class LoaderPass implements CompilerPassInterface {
 
 		$loaders = $this->taggedServices( $container, self::LOADER_TAG, LoaderInterface::class );
 
-		$this->assertNoneHoldsTheInterfaceId( $loaders );
+		$this->assertNoneHoldsTheLoaderIds( $loaders );
 
+		$loader = $this->loaderToUse( $container, $loaders );
+
+		foreach ( self::LOADER_ALIASES as $alias ) {
+			$container->setAlias( $alias, $loader );
+		}
+	}
+
+	/**
+	 * The id of the loader the environment receives, building the chain when it takes one.
+	 *
+	 * None at all leaves the stand-in, exactly one is used as it is, and several are
+	 * chained in the priority order they arrive in.
+	 *
+	 * @param ContainerBuilder                                                           $container The service container.
+	 * @param list<array{id: string, class: string, priority: int, source: string|null}> $loaders   The tagged loaders, highest priority first.
+	 * @return string
+	 */
+	private function loaderToUse( ContainerBuilder $container, array $loaders ): string {
 		if ( array() === $loaders ) {
-			$container->setAlias( LoaderInterface::class, NoTemplateSourceLoader::class );
-
-			return;
+			return NoTemplateSourceLoader::class;
 		}
 
 		if ( 1 === count( $loaders ) ) {
-			$container->setAlias( LoaderInterface::class, $loaders[0]['id'] );
-
-			return;
+			return $loaders[0]['id'];
 		}
 
 		$references = array();
@@ -91,26 +128,27 @@ final class LoaderPass implements CompilerPassInterface {
 		}
 
 		$container->setDefinition( self::CHAIN_ID, new Definition( ChainLoader::class, array( $references ) ) );
-		$container->setAlias( LoaderInterface::class, self::CHAIN_ID );
+
+		return self::CHAIN_ID;
 	}
 
 	/**
-	 * Refuses a loader registered under the interface id this pass points at whatever
-	 * it decides.
+	 * Refuses a loader registered under one of the ids this pass points at whatever it
+	 * decides.
 	 *
-	 * That id is this bundle's handle on the loader, not a slot a host fills. A
-	 * definition sitting there is either aliased to itself — the library refuses that
-	 * outright, with a message about a circular reference and nothing about Twig — or,
-	 * in a chain, deleted by the alias that replaces it while the chain still holds a
-	 * reference to it.
+	 * Those ids are this bundle's handles on the loader, not slots a host fills. A
+	 * definition sitting under one is either aliased to itself — the library refuses
+	 * that outright, with a message about a circular reference and nothing about Twig —
+	 * or, in a chain, deleted by the alias that replaces it while the chain still holds
+	 * a reference to it.
 	 *
 	 * @param list<array{id: string, class: string, priority: int, source: string|null}> $loaders The tagged loaders.
-	 * @throws \InvalidArgumentException When one of them holds the interface id.
+	 * @throws \InvalidArgumentException When one of them holds one of those ids.
 	 * @return void
 	 */
-	private function assertNoneHoldsTheInterfaceId( array $loaders ): void {
+	private function assertNoneHoldsTheLoaderIds( array $loaders ): void {
 		foreach ( $loaders as $loader ) {
-			if ( LoaderInterface::class !== $loader['id'] ) {
+			if ( ! in_array( $loader['id'], self::LOADER_ALIASES, true ) ) {
 				continue;
 			}
 
@@ -118,7 +156,7 @@ final class LoaderPass implements CompilerPassInterface {
 				sprintf(
 					'The loader "%s" is registered under the id "%s", which this bundle aliases to whichever loader it decides on. Register it under its own id, its class name for instance, and it is picked up the same way.',
 					$loader['class'],
-					LoaderInterface::class
+					$loader['id']
 				)
 			);
 		}

@@ -105,7 +105,7 @@ final class NoTemplateSourceLoader implements LoaderInterface {
 	private function noSource(): LoaderError {
 		return new LoaderError(
 			sprintf(
-				'Twig has no template source. The default directory "%s" does not exist and no "twig.paths" entry or "twig.loader" service is configured. Create that directory, or configure "twig.paths".',
+				'Twig has no template source. The default directory "%s" does not exist, and there is no "twig.paths" entry and no service tagged "twig.loader". Create that directory, or configure "twig.paths".',
 				$this->default_path
 			)
 		);
